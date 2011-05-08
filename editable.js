@@ -77,12 +77,12 @@
                 return true;
             }
             
-            var editable = new GENTICS.Aloha.Editable(element);
+            var editable = new Aloha.Editable(element);
             editable.vieEntity = this.options.model;
 
             // Subscribe to activation and deactivation events
             var widget = this;
-            GENTICS.Aloha.EventRegistry.subscribe(editable, 'editableActivated', function() {
+            Aloha.EventRegistry.subscribe(editable, 'editableActivated', function() {
                 widget._trigger('activated', null, {
                     editable: editable,
                     property: propertyName,
@@ -91,7 +91,7 @@
                     entityElement: this.element
                 });
             });
-            GENTICS.Aloha.EventRegistry.subscribe(editable, 'editableDeactivated', function() {
+            Aloha.EventRegistry.subscribe(editable, 'editableDeactivated', function() {
                 widget._trigger('deactivated', null, {
                     editable: editable,
                     property: propertyName,
