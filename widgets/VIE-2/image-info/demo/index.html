@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html  
+    version="XHTML+RDFa 1.0"
+    xmlns="http://www.w3.org/1999/xhtml" 
+    xml:lang="en"
+	xmlns:dbpedia = "http://dbpedia.org/resource/"
+	xmlns:dbprop = "http://dbpedia.org/property/"
+	xmlns:dbonto = "http://dbpedia.org/ontology/"
+    xmlns:yago = "http://dbpedia.org/class/yago/"
+	xmlns:rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:owl = "http://www.w3.org/2002/07/owl#"
+	xmlns:rdfs = "http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:iks = "http://www.iks-project.eu/#"
+	xmlns:fise = "http://fise.iks-project.eu/ontology/"
+	xmlns:foaf = "http://xmlns.com/foaf/0.1/"
+	xmlns:dc = "http://purl.org/dc/terms/"
+	xmlns:geo = "http://www.w3.org/2003/01/geo/wgs84_pos#"
+	xmlns:google = "http://rdf.data-vocabulary.org/#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:rdfcal="http://www.w3.org/2002/12/cal#"
+    xmlns:demo="http://this.demo.eu/">
+	<head>
+		<meta http-equiv="content-type" content="application/xhtml+xml;charset=utf-8" />
+        <title>DEMO - Semantic Image Information widget</title>
+		
+		<!-- Demo-specific CSS -->
+	        <link rel="stylesheet" type="text/css" href="css/demo.css" />
+        
+		<!-- 3rd-party libs -->
+		<script type="text/javascript" src="../../../../lib/jquery/1.4/jquery-1.4.4.min.js"></script>
+                <script type="text/javascript" src="../../../../lib/jquery-ui/1.8/js/jquery-ui-1.8.11.custom.min.js"></script>
+		<script type="text/javascript" src="../../../../lib/rdfquery/latest/jquery.rdfquery.min.js"></script>
+		<script type="text/javascript" src="../../../../lib/underscore/underscore.js"></script>
+		<script type="text/javascript" src="../../../../lib/backbone/backbone.js"></script>
+        
+		<!-- VIE -->
+		<script type="text/javascript" src="../../../../lib/vie/vie.min.js"></script>
+        
+		<!-- Flipping effect (uses Webkit-specific CSS3 code) -->
+	        <script type="text/javascript" src="../js/flippable.js"></script>
+	   
+                <!-- VIE^2 -->
+		<script type="text/javascript" src="../../../../lib/vie-2/vie2-1.0.2.debug.js"></script>
+		<script type="text/javascript">VIE2.logLevels = ["info", "warn", "error"];</script>
+		<!-- Connector plug-ins -->
+		<script type="text/javascript" src="../js/vie-2/connector/dbpedia.js"></script>
+		<script type="text/javascript" src="../js/vie-2/connector/rdfa.js"></script>
+		<!-- Mapping plug-ins -->
+		<script type="text/javascript" src="../js/vie-2/mapping/skyscraper.js"></script>
+		<script type="text/javascript" src="../js/vie-2/mapping/place.js"></script>
+		
+		<!-- Google Maps API -->
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+		
+		<!-- Demo-specific Javascript -->
+		<script type="text/javascript" src="../src/image-info.js"></script>
+    </head>
+    <body>
+    	<div id="map_canvas"></div>
+    	<div id="page">
+            <div id="warning"></div>
+            <div id="content">
+				<div>
+					<h2>The Eiffel Tower</h2>
+	                <img style="float:left; margin-right:20px;"  about="[dbpedia:Eiffel_Tower]" typeof="dbonto:Skyscraper" src="./images/Tour_Eiffel_Wikimedia_Commons.jpeg"/>
+					<p>The Eiffel Tower (French: La Tour Eiffel, nickname La dame de fer, the iron lady) 
+					is an iron lattice tower located on the Champ de Mars in Paris. Built in 1889, it has become both a global icon of France and one of the most recognizable structures in the world. 
+					The tower is the tallest building in Paris and the most-visited paid monument in the world; millions of people ascend it every year. Named for its designer, engineer Gustave Eiffel, 
+					the tower was built as the entrance arch to the 1889 World's Fair.</p>
+					<p>The tower stands 324 metres (1,063 ft) tall, about the same height as an 81-storey building. Upon its completion, it surpassed the Washington Monument to assume the title of tallest 
+					man-made structure in the world, a title it held for 41 years, until the Chrysler Building in New York City was built in 1930. Not including broadcast antennas, it is the second-tallest
+					structure in France after the 2004 Millau Viaduct.</p>
+					<p>The tower has three levels for visitors. Tickets can be purchased to ascend, by stairs or lift, to the first and second levels. The walk to the first level is over 300 steps, as is 
+					the walk from the first to the second level. The third and highest level is accessible only by elevator. Both the first and second levels feature restaurants.</p>
+					<p>The tower has become the most prominent symbol of both Paris and France, often in the establishing shot of films set in the city.</p>
+					</div>
+            </div>
+        </div>
+        <img src="images/iks-logo.jpeg" style="position:fixed;top:10px;left:10px;" />
+    </body>
+</html>
