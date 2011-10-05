@@ -28,7 +28,7 @@
                         return undefined;
                     }
                     
-                    url += "&sort=relevance";
+                    url += "&sort=interestingness-desc";
                     url += "&per_page=" + this.options.bin_size;
                     url += "&page=" + this.options.page_num;
                     url += this.options.jsonp_tail;
@@ -43,8 +43,8 @@
                     if (entity.has('latitude') && 
                         entity.has('longitude')) {
                         var ts = Math.round((new Date()).getTime() / 1000);
-                        var minUploadDate = ts - 604800; // last week
-                        var radius = 20;
+                        var minUploadDate = ts - 604800 * 100; // last 100 weeks
+                        var radius = 10;
                         var radiusUnits = "km";
                         
                         var lat = entity.get("latitude");
@@ -59,12 +59,13 @@
                         url += "&lat=" + lat + "&lon=" + lon;
                         url += "&min_upload_date=" + minUploadDate;
                         url += "&radius=" + radius;
+                        url += "&text=tourist attraction";
                         url += "&radius_units=" + radiusUnits;
                     } else {
                         return undefined;
                     }
                     
-                    url += "&sort=relevance";
+                    url += "&sort=interestingness-desc";
                     url += "&per_page=" + this.options.bin_size;
                     url += "&page=" + this.options.page_num;
                     url += this.options.jsonp_tail;
@@ -94,7 +95,7 @@
                         return undefined;
                     }
                     
-                    url += "&sort=relevance";
+                    url += "&sort=interestingness-desc";
                     url += "&per_page=" + this.options.bin_size;
                     url += "&page=" + this.options.page_num;
                     url += this.options.jsonp_tail;
