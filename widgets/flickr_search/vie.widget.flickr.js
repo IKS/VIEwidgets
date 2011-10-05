@@ -10,40 +10,102 @@
             vie         : new VIE(),
             api_key     : 'abcdefghijklmnopqrstuvwxyz012345',
             bin_size    : 10,
+            page_num    : 1,
+            more_btn_txt: "More images...",
             ts_query    : {
-                "Person" : function (entity, widget) {
-                    var name = entity.get("name");
-                    if ($.isArray(name) && name.length > 0) {
-                        name = name[0]; //just take the first
+                "Person" : function (entity) {
+                    var url = this.options.base_url;
+                    url += "?method=flickr.photos.search";
+                    url += "&api_key=" + this.options.api_key;
+                    
+                    if (entity.has("name")) {
+                        var name = entity.get("name");
+                        if ($.isArray(name) && name.length > 0) {
+                            name = name[0]; //just take the first
+                        }
+                        url += "&text=" + name;
+                    } else {
+                        return undefined;
                     }
                     
-                    var url = widget.options.base_url;
-                    url += "?method=flickr.photos.search";
-                    url += "&api_key=" + widget.options.api_key;
-                    url += "&text=" + name;
                     url += "&sort=relevance";
-                    url += "&per_page=" + widget.options.bin_size;
-                    url += "&page=" + widget.options.page_num;
-                    url += widget.options.jsonp_tail;
+                    url += "&per_page=" + this.options.bin_size;
+                    url += "&page=" + this.options.page_num;
+                    url += this.options.jsonp_tail;
+                
+                    return url;
+                },
+                "GeoCoordinates" : function (entity) {
+                    var url = this.options.base_url;
+                    url += "?method=flickr.photos.search";
+                    url += "&api_key=" + this.options.api_key;
                     
+                    if (entity.has('latitude') && 
+                        entity.has('longitude')) {
+                        var ts = Math.round((new Date()).getTime() / 1000);
+                        var minUploadDate = ts - 604800; // last week
+                        var radius = 20;
+                        var radiusUnits = "km";
+                        
+                        var lat = entity.get("latitude");
+                        if ($.isArray(lat) && lat.length > 0) {
+                            lat = lat[0]; //just take the first
+                        }
+                        var lon = entity.get("longitude");
+                        if ($.isArray(lon) && lon.length > 0) {
+                            lon = lon[0]; //just take the first
+                        }
+                        
+                        url += "&lat=" + lat + "&lon=" + lon;
+                        url += "&min_upload_date=" + minUploadDate;
+                        url += "&radius=" + radius;
+                        url += "&radius_units=" + radiusUnits;
+                    } else {
+                        return undefined;
+                    }
+                    
+                    url += "&sort=relevance";
+                    url += "&per_page=" + this.options.bin_size;
+                    url += "&page=" + this.options.page_num;
+                    url += this.options.jsonp_tail;
+                
                     return url;
                 },
                 "Place" : function (entity) {
-                    debugger;
-                    if (entity.get('geo') &&
-                            entity.get('geo').get('latitude') &&
-                            entity.get('geo').get('longitude')) {
-                        //TODO: trigger search by LatLong
+                    var url = this.options.base_url;
+                    url += "?method=flickr.photos.search";
+                    url += "&api_key=" + this.options.api_key;
+                    
+                    if (entity.has('geo')) {
+                        var geo = entity.get("geo");
+                        return this._getUrlFromEntity(geo);
+                    } else if (entity.has('address')) {
+                        //TODO: trigger search by Address
+                    } else if (entity.has('containedIn')) {
+                        var containedIn = entity.get('containedIn');
+                        return this._getUrlFromEntity(containedIn);
+                    } else if (entity.has('name')) {
+                        var name = entity.get("name");
+                        if ($.isArray(name) && name.length > 0) {
+                            name = name[0]; //just take the first
+                        }
+                        url += "&text=" + name;
                     } else {
-                        //TODO: fallback
+                        return undefined;
                     }
+                    
+                    url += "&sort=relevance";
+                    url += "&per_page=" + this.options.bin_size;
+                    url += "&page=" + this.options.page_num;
+                    url += this.options.jsonp_tail;
+                
+                    return url;
                 }
             },
             
             // helper
             render: undefined,
             entity: undefined,
-            page_num: 1,
             base_url    : "http://api.flickr.com/services/rest/",
             jsonp_tail  : "&extras=url_o&format=json&jsoncallback=?",
             
@@ -53,7 +115,6 @@
         },
         
         _create: function () {
-            console.info("VIE Widget 'Flickr' created on element!", this.element);
             var self = this;
             self.element.bind('flickrend_query',
                 function (event, data) {
@@ -78,13 +139,22 @@
                 var photo = photos[p];
                 var image = $('<a class="' + self.widgetBaseClass + '-image" target="_blank" href="' + photo.original + '"></a>')
                     .append($("<img src=\"" + photo.thumbnail + "\" />"));
-                image.trigger("create"); //TODO: hack as 
                 $(self.element).append(image);
+            }
+            if (photos.length) {
+                var button = $('<button>')
+                    .text(self.options.more_btn_txt)
+                    .click(function () {
+                        $(self.element).flickr({
+                            page_num : self.options.page_num+1
+                        })
+                    });
+                $(self.element)
+                .append(button);
             }
         },
         
         triggerSearch: function (entity) {
-            this.options.page_num = 1;
             
             if (typeof entity === "string") {
                 entity = this.options.vie.entities.get(entity);
@@ -103,91 +173,30 @@
         },
         
         _getUrlFromEntity : function (entity) {
-            var types = entity.get('@type');
-            types = ($.isArray(type))? types : [ types ];
-            
-            for (var t = 0; t < types.length; t++) {
-                var type = this.options.vie.types.get(types[t]);
-                if (type) {
-                    for (var q in this.options.ts_query) {
-                        if (type.isof(q)) {
-                            return this.options.ts_query[q](entity, this);
+            entity = ($.isArray(entity))? entity : [ entity ];
+
+            for (var e = 0; e < entity.length; e++) {
+                var types = entity[e].get('@type');
+                types = ($.isArray(type))? types : [ types ];
+                
+                for (var t = 0; t < types.length; t++) {
+                    var type = this.options.vie.types.get(types[t]);
+                    if (type) {
+                        for (var q in this.options.ts_query) {
+                            if (type.isof(q)) {
+                                var ret = this.options.ts_query[q].call(this, entity[e]);
+                                if (ret) {
+                                    return ret;
+                                }
+                            }
                         }
                     }
                 }
             }
                         
             //TODO: fallback!
-            var text = "This is a test";
-            var url = self.options.base_url;
-            url += "?method=flickr.photos.search";
-            url += "&api_key=" + self.options.api_key;
-            url += "&text=" + text;
-            url += "&sort=relevance";
-            url += "&per_page=" + this.options.bin_size;
-            url += "&page=" + this.options.page_num;
-            url += self.options.jsonp_tail;
-            
-            return url;
+            return undefined;
         },
-       /*         
-        _getUrlWithText: function  (text) {
-            var self = this;
-            
-            text = encodeURI(text);
-            
-            var url = self.options.base_url;
-            url += "?method=flickr.photos.search";
-            url += "&api_key=" + self.options.api_key;
-            url += "&text=" + text;
-            url += "&sort=relevance";
-            url += "&per_page=" + this.options.bin_size;
-            url += "&page=" + this.options.page_num;
-            url += self.options.jsonp_tail;
-            
-            return url;
-        },
-                
-        _findPhotosByLatLong: function  (lat, lon) {
-            var self = this;
-                        
-            var ts = Math.round((new Date()).getTime() / 1000);
-            var minUploadDate = ts - 604800; // last week
-            var radius = 20;
-            var radiusUnits = "km";
-            
-            var url = self.options.base_url;
-            url += "&lat=" + lat + "&lon=" + lon;
-            url += "&min_upload_date=" + minUploadDate;
-            url += "&radius=" + radius;
-            url += "&radius_units=" + radiusUnits;
-            url += "&sort=relevance";
-            url += "&per_page=" + this.options.bin_size;
-            url += "&page=" + this.options.page_num;
-            url += self.options.jsonp_tail;
-            
-            return url;
-        },
-                
-        _findPhotosByTags: function  (tags) {
-            var self = this;
-            
-            if (!$.isArray(tags)) {
-                tags = tags.split(" ");
-            }
-                        
-            var url = self.options.base_url;
-            url += "?method=flickr.photos.search";
-            url += "&api_key=" + self.options.api_key;
-            url += "&tags=" + tags.join();
-            url += "&tag_mode=all";
-            url += "&sort=relevance";
-            url += "&per_page=" + this.options.bin_size;
-            url += "&page=" + this.options.page_num;
-            url += self.options.jsonp_tail;
-            
-            return url;
-        },*/
         
         _flickrCallback: function (widget) {
             return function (data) {
@@ -215,6 +224,7 @@
                           photos.push(photoObj);
                       }
                   }
+                  widget._pageNum++;
                   widget._trigger('end_query', undefined, {time: new Date(), photos: photos});
               };
         }

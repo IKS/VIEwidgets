@@ -2,14 +2,17 @@
 <head>
 	<title>VIE Widget - Flickr Search</title>
     
+    <link href="../../utils/style.css" media="screen" rel="stylesheet">
+    
+    <!--  jQuery &amp; jQuery UI -->
 	<script type="text/javascript" src="../../lib/jquery-1.6.1.js"></script>
     <script type="text/javascript" src="../../lib/jquery-ui-1.8.16.js"></script>
+        
+    <!-- jQuery TipTip plugin -->
+    <script type="text/javascript"          src="../../utils/tiptip/jquery.tipTip.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../utils/tiptip/jquery.tipTip.css" media="screen" />
     
-    <!-- jQuery Lightbox plugin -->
-    <script type="text/javascript"          src="../../utils/lightbox/jquery.lightbox-0.5.js"></script>
-    <link rel="stylesheet" type="text/css" href="../../utils/lightbox/jquery.lightbox-0.5.css" media="screen" />
-    
-    <script type="text/javascript" src="../../lib/rdfquery.js"></script>
+    <!--  VIE dependencies: Underscore &amp; Backbone -->
     <script type="text/javascript" src="../../lib/underscore.js"></script>        
     <script type="text/javascript" src="../../lib/backbone.js"></script>
       
@@ -22,95 +25,85 @@
 	<script type="text/javascript" src="./vie.widget.flickr.js"></script>
 
     
+    <!-- DEMO-specific code -->
     <script type="text/javascript">
-    $(function() {
-        // initialize a global VIE object
-        var myVIE = window.myVIE = new VIE();
-        myVIE.loadSchemaOrg();   
-        myVIE.namespaces.base("http://schema.org/");
-        
-        //manually fill VIE with some entities:
-        myVIE.entities.add({
-        	'@subject'  : "http://dbpedia.org/resource/Barack_Obama",
-        	'@type'     : 'Person',
-        	'name'      : ['Barack Obama', 'Barack Hussein Obama'],
-        	'birthDate' : '1961-08-04'
-        });
-        myVIE.entities.add({
-        	'@subject'  : "http://dbpedia.org/resource/Steve_Jobs",
-        	'@type'     : 'Person',
-        	'name'      : 'Steve Jobs',
-        	'birthDate' : '1955-02-24'
-        });
-        myVIE.entities.add({
-        	'@subject'  : "http://dbpedia.org/resource/Berlin",
-        	'@type'     : 'City',
-        	'name'      : 'Steve Jobs',
-        	'geo'       : {
-        	    'latitude'  : 52.500557,
-        	    'longitude' : 13.398889
-        	}
-        });
-        
-        $('#flickr_container')
-        .flickr({
-            vie     : myVIE,
-            api_key : "ffd6f2fc41249feeddd8e62a531dc83e",
-        });
-                
-        $('#entities').change(function (ev) {
-            var uri = $(':selected', this).val();
-            var entity = myVIE.entities.get(uri);
-            $('#flickr_container').flickr({
-                entity: entity
+        $(function() {
+            // initialize a global VIE object
+            var myVIE = window.myVIE = new VIE();
+            myVIE.loadSchemaOrg();
+            
+            // read RDFa from the text below!
+            myVIE.use(new myVIE.RdfaService);
+            myVIE.load({element: $('[about]')})
+            .from('rdfa').execute();
+            
+            // set-up of the Flickr-widget
+            $('#flickr_container')
+            .flickr({
+                vie     : myVIE,
+                api_key : "ffd6f2fc41249feeddd8e62a531dc83e",
+                bin_size: 8
+            });
+            
+            $('[about]')
+            .attr("title", "Click on an entity to trigger a type-specific photo search.")
+            .tipTip()
+            .click(function (ev) {
+                var uri = $(this).attr('about');
+                $('#flickr_container').flickr({
+                    entity: uri
+                });
             });
         });
-        
-        $('[about]').click(function (ev) {
-            var uri = $(this).attr('about');            
-            $('#flickr_container').flickr('triggerSearch', uri);
-        });
-        
-        $('.view-flickr-image').live("create", function(){
-        	$(this).lightBox({
-        	    imageLoading : "../../utils/lightbox/lightbox-ico-loading.gif",
-        	    imageBtnClose: "../../utils/lightbox/lightbox-btn-close.gif",
-        	    imageBtnPrev : "../../utils/lightbox/lightbox-btn-prev.gif",
-        	    imageBtnNext : "../../utils/lightbox/lightbox-btn-next.gif",
-        	    imageBlank   : "../../utils/lightbox/lightbox-blank.gif"
-        	});
-        });
-        
-    });
     </script>
-
+    
+    <style>
+        #flickr_container {
+            max-height:300px;
+        }
+        
+        #flickr_container a img {
+            box-shadow: 0px 0px 10px #555;
+            margin: 1em 1em;
+            width: 6em;
+            height: 6em;
+        }
+    </style>
+    
 </head>
 <body>
-    <h1>VIE Widget - Flickr Search - Demo</h1>
-    <p>
-        Please select an entity to trigger the photo search on <a href="http://www.flickr.com/">Flickr</a>.
-    </p>
-    <select id="entities">
-        <option></option>
-        <optgroup label="Persons">
-            <option value="<http://dbpedia.org/resource/Barack_Obama>">Barack Obama</option>
-            <option value="<http://dbpedia.org/resource/Steve_Jobs>">Steve Jobs</option>
-        </optgroup>
-        <optgroup label="Places">
-            <option value="<http://dbpedia.org/resource/Berlin>">Berlin, Germany</option>
-            <option value="<http://dbpedia.org/resource/Paris>">Paris, France</option>
-        </optgroup>
-    </select>
-    
-    <p>
-    This is a text, where <span about="<http://dbpedia.org/resource/Barack_Obama>">Barack Obama</span> is annotated with RDFa.
-    </p>
+<div id="wrapper">
+    <h1>VIE Widget - Flickr Search</h1>
+   <article>
+        <span about="http://dbpedia.org/resource/Washington,_D.C._metropolitan_area" typeof="Place"><span property="name">WASHINGTON, D.C.</span>
+        <span rel="geo"><span about="http://dbpedia.org/resource/Washington,_D.C._metropolitan_area_GEO" typeof="GeoCoordinates"><span property="latitude" content="38.886757"></span><span property="longitude" content="-77.041626"></span></span></span></span>
+        The House has passed a short-term spending bill that keeps the government 
+        running for six weeks and buys time for future budget negotiations. The 352-66 vote sends 
+        the measure to President <span about="http://dbpedia.org/resource/Barack_Obama" typeof="Person"><span property="name">Barack Obama</span></span> 
+        in time to avert a government shutdown at midnight. 
+        The legislation gives Congress and the White House more time to iron out their differences 
+        on a pile of unfinished budget work totaling more than $1 trillion. It also ends a fight 
+        over whether some aid for victims of Hurricane Irene and other natural disasters should 
+        have been offset by cuts elsewhere.
+        <div class="from">From: <a href="http://www.9and10news.com/Category/Story/?id=305023&cID=3">http://www.9and10news.com/Category/Story/?id=305023&cID=3</a></div>
+    </article> 
+    <article>
+        <span about="http://dbpedia.org/resource/Cupertino,_California" typeof="City"><span property="name">CUPERTINO, California</span>
+        <span rel="geo"><span about="http://dbpedia.org/resource/Cupertino,_California_GEO" typeof="GeoCoordinates"><span property="latitude" content="37.317501"></span><span property="longitude" content="-122.041946"></span></span></span></span>
+        It's the first time in years that Apple has unveiled a major new product
+        without <span about="http://dbpedia.org/resource/Steve_Jobs" typeof="Person"><span property="name">Steve Jobs</span></span> presiding over 
+        the announcement. The company's new CEO, <span about="http://dbpedia.org/resource/Tim_Cook" typeof="Person"><span property="name">Tim Cook</span></span>, was the one introducing the company's new iPhone 
+        today -- faster and more powerful than the previous version. Cook took over as CEO after Jobs, 
+        who has been battling health problems, resigned in August.
+        <div class="from">From: <a href="http://www.9and10news.com/Category/Story/?id=305023&cID=3">http://www.9and10news.com/Category/Story/?id=305023&cID=3</a></div>
+    </article>
     
     
     <div id="flickr_container"></div>
     
     <div class="copyright">
-        This site uses the <a href="http://www.flickr.com/services/api/">Flickr</a> API, however is not associated or endorsed by <a href="http://www.flickr.com/">Flickr</a>.
+        This site uses the <a href="http://www.flickr.com/services/api/">Flickr</a> API! <br />However it is not associated or endorsed by <a href="http://www.flickr.com/">Flickr</a>.
+    </div>
     </div>
 </body>
 </html>
