@@ -59,6 +59,14 @@ body {
     line-height: 1;
 }
 
+#wrapper h2 {
+    font-size: 32px;
+    font-weight: bold;
+    text-align: center;
+    padding: 0px 0 30px 0;
+    line-height: 1;
+}
+
 #wrapper article {
   margin-bottom: 20px;
   border-bottom: 1px dotted grey;
@@ -73,7 +81,7 @@ body {
   text-align: center;
 }
 
-#wrapper .copyright, #wrapper .copyright a {
+.copyright, .copyright a, .tellmemore, .tellmemore a, .goback, .goback a {
   font-size: 11px;
   text-transform: uppercase;
   text-decoration: none;
