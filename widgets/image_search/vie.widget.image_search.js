@@ -69,9 +69,16 @@
                 for (var t = 0; t < types.length; t++) {
                     var type = this.options.vie.types.get(types[t]);
                     if (type) {
+                        var tsKeys = [];
                         for (var q in service.ts_url) {
-                            if (type.isof(q)) {
-                                var ret = service.ts_url[q].call(this, entity[e], service);
+                            tsKeys.push(q);
+                        }
+                        //sort the keys in ascending order!
+                        tsKeys = this.options.vie.types.sort(tsKeys, false);
+                        for (var q = 0; q < tsKeys.length; q++) {
+                            var key = tsKeys[q];
+                            if (type.isof(key)) {
+                                var ret = service.ts_url[key].call(this, entity[e], service);
                                 if (ret) {
                                     return ret;
                                 }
@@ -126,7 +133,7 @@
                     },
                     ts_url : {
                         "Thing" : function (entity, service) {
-                            
+                            return "";
                         }
                     }
                 },
@@ -180,8 +187,8 @@
                                       };
                                       photos.push(photoObj);
                                   }
+                                  widget._pageNum++;
                               }
-                              widget._pageNum++;
                               var data = {service: service, time: new Date(), photos: photos};
                               widget._trigger('end_query', undefined, data);
                               var render = (widget.options.render)? widget.options.render : widget._render;
@@ -189,9 +196,19 @@
                           };
                     },
                     ts_url : {
-                        //"Thing" : function (entity, service) {
-                        //    
-                        //},
+                        "Thing" : function (entity, service) {
+                            var url = "";
+                            
+                            if (entity.has("name")) {
+                                var name = entity.get("name");
+                                if ($.isArray(name) && name.length > 0) {
+                                    name = name[0]; //just take the first
+                                }
+                                url += "&text="; // *no* type-specific keywords
+                                url += name;
+                            }
+                            return url;
+                        },
                         "Person" : function (entity, service) {
                             var url = "";
                             
@@ -200,7 +217,10 @@
                                 if ($.isArray(name) && name.length > 0) {
                                     name = name[0]; //just take the first
                                 }
-                                url += "&text=portrait " + name;
+                                url += "&text=portrait "; // type-specific keywords
+                                url += name;
+                            } else {
+                                return undefined
                             }
                             return url;
                         },
@@ -226,9 +246,11 @@
                                 url += "&lat=" + lat + "&lon=" + lon;
                                 url += "&min_upload_date=" + minUploadDate;
                                 url += "&radius=" + radius;
-                                url += "&text=tourist attraction";
+                                url += "&text=tourist attraction"; // type-specific keywords!
                                 url += "&radius_units=" + radiusUnits;
-                            }                        
+                            } else {
+                                return undefined
+                            }                      
                             return url;
                         },
                         "Place" : function (entity, service) {
@@ -237,7 +259,7 @@
                             if (entity.has('geo')) {
                                 var geo = entity.get("geo");
                                 return this._getUrlMainPartFromEntity(geo, service);
-                            }else if (entity.has('containedIn')) {
+                            } else if (entity.has('containedIn')) {
                                 var containedIn = entity.get('containedIn');
                                 return this._getUrlMainPartFromEntity(containedIn, service);
                             } else if (entity.has('name')) {
@@ -245,7 +267,10 @@
                                 if ($.isArray(name) && name.length > 0) {
                                     name = name[0]; //just take the first
                                 }
-                                url += "&text=tourist attraction " + name;
+                                url += "&text=tourist attraction "; // type-specific keywords
+                                url += name;
+                            } else {
+                                return undefined
                             }
                             return url;
                         }
