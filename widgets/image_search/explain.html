@@ -1,0 +1,126 @@
+<html>
+<head>
+    <title>VIE Widget - Image Search</title>
+    
+    <link href="../../utils/style.css" media="screen" rel="stylesheet">
+    
+    <!--  jQuery &amp; jQuery UI -->
+    <script type="text/javascript" src="../../lib/jquery-1.6.1.js"></script>
+    <script type="text/javascript" src="../../lib/jquery-ui-1.8.16.js"></script>
+        
+    <!-- SHJS -->
+    <script type="text/javascript"          src="../../utils/shjs/shjs.min.js"></script>
+    <script type="text/javascript"          src="../../utils/shjs/sh_javascript.min.js"></script>
+    <script type="text/javascript"          src="../../utils/shjs/sh_javascript_dom.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../utils/shjs/sh_dull.min.css" media="screen" />
+</head>
+<body onload="sh_highlightDocument();">
+<div id="wrapper">
+    <h1>VIE Widget - Image Search</h1>
+    <h2>How To</h2>
+   <article>
+    First, we need to include the dependencies in the header:
+    <br /><br />
+        <pre class="sh_javascript_dom">
+&lt;head>
+...
+    &lt;!--  jQuery &amp; jQuery UI -->
+    &lt;script type="text/javascript" src="../../lib/jquery-1.6.1.js">&lt;/script>
+    &lt;script type="text/javascript" src="../../lib/jquery-ui-1.8.16.js">&lt;/script>
+    
+    &lt;!--  VIE dependencies: Underscore &amp; Backbone -->
+    &lt;script type="text/javascript" src="../../lib/underscore.js">&lt;/script>        
+    &lt;script type="text/javascript" src="../../lib/backbone.js">&lt;/script>
+      
+    &lt;!-- vie.js itself -->
+    &lt;script type="text/javascript" src="../../lib/vie.js">&lt;/script>
+    &lt;script type="text/javascript" src="../../utils/schemaOrg/schema.json">&lt;/script>
+    &lt;script type="text/javascript" src="../../utils/schemaOrg/wrapper.js">&lt;/script>
+    
+    &lt;!--  the current VIE widget -->
+    &lt;script type="text/javascript" src="./vie.widget.image_search.js">&lt;/script>
+...
+</pre>
+<br />
+Now, we can read-in the embedded <a target="_blank" href="">RDFa</a> annotations from the webpage:
+<br /><br />
+<pre class="sh_javascript_dom">
+    &lt;script type="text/javascript">
+        $(function() {
+            // initialize a global VIE object
+            var myVIE = window.myVIE = new VIE();
+            myVIE.loadSchemaOrg();
+            
+            // read RDFa from the text below
+            myVIE.use(new myVIE.RdfaService);
+            myVIE.load({element: $('[about]')})
+            .from('rdfa').execute();
+</pre>
+<br />This is executed asynchronously, but fast, so we do not care about concurrency problems for now. What
+we do now is to set up the widget:
+<br /><br />
+<pre class="sh_javascript_dom">
+            // set-up of the Flickr-widget
+            $('#image_container')
+            .vieImageSearch({
+                vie    : myVIE,
+                services : {
+                    flickr : {
+                        api_key : "&lt;put_your_API_KEY_here>",
+                        bin_size: 8,
+                        use: true
+                    }
+                }
+            });
+</pre>
+<br />
+And finally, registering the annotated RDFa elements with a <i>click-event handler</i> to trigger the semantic
+image search:
+<br /><br />
+<pre class="sh_javascript_dom">
+            $('[about]')
+            .attr("title", "Click on an entity to trigger a type-specific image search.")
+            .tipTip()
+            .click(function (ev) {
+                var uri = $(this).attr('about');
+                $('#image_container')
+                .vieImageSearch({
+                    entity: uri
+                });
+            });
+        });
+</pre>
+<br />
+<b>User:</b> "Great! But this searches only for <i>Persons</i> and <i>Places</i>... How can I extend it?"
+<b>Me:  </b> "Glad that you ask! Let me show you how to customize the widget to search for a <i>Product</i>:"
+<br /><br />
+<pre class="sh_javascript_dom">
+            $('#image_container')
+            .vieImageSearch({
+                vie    : myVIE,
+                services : {
+                    flickr : {
+                        ...
+                        ts_url : {
+                        "Product" : function (entity, service) {
+                            var url = "";
+                            if (entity.has("brand") && entity.has("model")) {
+                                var brand = entity.get("brand").get("name");
+                                var model = entity.get("model");
+                                url += "&text=" + brand + " " + model;
+                            } else {
+                                return undefined;
+                            }
+                            return url;
+                        },
+                    }
+                }
+            });
+        </pre>
+    </article>
+    <div class="goback">
+        <a href="index.html">Go back...</a>.
+    </div>
+    </div>
+</body>
+</html>
