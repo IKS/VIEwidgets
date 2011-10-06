@@ -4,7 +4,7 @@
 // (see LICENSE)
 
 (function($, undefined) {
-    $.widget('view.flickr', {
+    $.widget('view.vieImageSearch', {
         
         options: {
             vie         : new VIE(),
@@ -117,14 +117,10 @@
         
         _create: function () {
             var self = this;
-            self.element.bind('flickrend_query',
-                function (event, data) {
-                    var render = (self.options.render)? self.options.render : self._render;
-                    render.call(self, data);
-            });
         },
         
         _init: function () {
+            debugger;
             this.triggerSearch(this.options.entity);
         },
         
@@ -146,7 +142,7 @@
                 var button = $('<button>')
                     .text(self.options.more_btn_txt)
                     .click(function () {
-                        $(self.element).flickr({
+                        $(self.element).vieImageSearch({
                             page_num : self.options.page_num+1
                         })
                     });
@@ -226,7 +222,10 @@
                       }
                   }
                   widget._pageNum++;
-                  widget._trigger('end_query', undefined, {time: new Date(), photos: photos});
+                  var data = {time: new Date(), photos: photos};
+                  widget._trigger('end_query', undefined, data);
+                  var render = (widget.options.render)? widget.options.render : widget._render;
+                  render.call(widget, data);
               };
         }
     });

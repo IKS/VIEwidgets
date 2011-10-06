@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>VIE Widget - Flickr Search</title>
+	<title>VIE Widget - Image Search</title>
     
     <link href="../../utils/style.css" media="screen" rel="stylesheet">
     
@@ -22,7 +22,7 @@
 	<script type="text/javascript" src="../../utils/schemaOrg/wrapper.js"></script>
 	
     <!--  the current VIE widget -->
-	<script type="text/javascript" src="./vie.widget.flickr.js"></script>
+	<script type="text/javascript" src="./vie.widget.image_search.js"></script>
 
     
     <!-- DEMO-specific code -->
@@ -32,14 +32,14 @@
             var myVIE = window.myVIE = new VIE();
             myVIE.loadSchemaOrg();
             
-            // read RDFa from the text below!
+            // read RDFa from the text below
             myVIE.use(new myVIE.RdfaService);
             myVIE.load({element: $('[about]')})
             .from('rdfa').execute();
             
             // set-up of the Flickr-widget
-            $('#flickr_container')
-            .flickr({
+            $('#image_container')
+            .vieImageSearch({
                 vie     : myVIE,
                 api_key : "ffd6f2fc41249feeddd8e62a531dc83e",
                 bin_size: 8
@@ -50,7 +50,8 @@
             .tipTip()
             .click(function (ev) {
                 var uri = $(this).attr('about');
-                $('#flickr_container').flickr({
+                $('#image_container')
+                .vieImageSearch({
                     entity: uri
                 });
             });
@@ -58,11 +59,11 @@
     </script>
     
     <style>
-        #flickr_container {
+        #image_container {
             max-height:300px;
         }
         
-        #flickr_container a img {
+        #image_container a img {
             box-shadow: 0px 0px 10px #555;
             margin: 1em 1em;
             width: 6em;
@@ -73,7 +74,7 @@
 </head>
 <body>
 <div id="wrapper">
-    <h1>VIE Widget - Flickr Search</h1>
+    <h1>VIE Widget - Image Search</h1>
    <article>
         <span about="http://dbpedia.org/resource/Washington,_D.C._metropolitan_area" typeof="Place"><span property="name">WASHINGTON, D.C.</span>
         <span rel="geo"><span about="http://dbpedia.org/resource/Washington,_D.C._metropolitan_area_GEO" typeof="GeoCoordinates"><span property="latitude" content="38.886757"></span><span property="longitude" content="-77.041626"></span></span></span></span>
@@ -99,7 +100,7 @@
     </article>
     
     
-    <div id="flickr_container"></div>
+    <div id="image_container"></div>
     
     <div class="copyright">
         This site uses the <a href="http://www.flickr.com/services/api/">Flickr</a> API! <br />However it is not associated or endorsed by <a href="http://www.flickr.com/">Flickr</a>.
