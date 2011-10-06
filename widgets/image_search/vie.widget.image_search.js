@@ -6,121 +6,11 @@
 (function($, undefined) {
     $.widget('view.vieImageSearch', {
         
-        options: {
-            vie         : new VIE(),
-            api_key     : 'abcdefghijklmnopqrstuvwxyz012345',
-            bin_size    : 10,
-            page_num    : 1,
-            more_btn_txt: "More images...",
-            ts_query    : {
-                "Person" : function (entity) {
-                    var url = this.options.base_url;
-                    url += "?method=flickr.photos.search";
-                    url += "&api_key=" + this.options.api_key;
-                    
-                    if (entity.has("name")) {
-                        var name = entity.get("name");
-                        if ($.isArray(name) && name.length > 0) {
-                            name = name[0]; //just take the first
-                        }
-                        url += "&text=" + name;
-                    } else {
-                        return undefined;
-                    }
-                    
-                    url += "&sort=interestingness-desc";
-                    url += "&per_page=" + this.options.bin_size;
-                    url += "&page=" + this.options.page_num;
-                    url += this.options.jsonp_tail;
-                
-                    return url;
-                },
-                "GeoCoordinates" : function (entity) {
-                    var url = this.options.base_url;
-                    url += "?method=flickr.photos.search";
-                    url += "&api_key=" + this.options.api_key;
-                    
-                    if (entity.has('latitude') && 
-                        entity.has('longitude')) {
-                        var ts = Math.round((new Date()).getTime() / 1000);
-                        var minUploadDate = ts - 604800 * 100; // last 100 weeks
-                        var radius = 10;
-                        var radiusUnits = "km";
-                        
-                        var lat = entity.get("latitude");
-                        if ($.isArray(lat) && lat.length > 0) {
-                            lat = lat[0]; //just take the first
-                        }
-                        var lon = entity.get("longitude");
-                        if ($.isArray(lon) && lon.length > 0) {
-                            lon = lon[0]; //just take the first
-                        }
-                        
-                        url += "&lat=" + lat + "&lon=" + lon;
-                        url += "&min_upload_date=" + minUploadDate;
-                        url += "&radius=" + radius;
-                        url += "&text=tourist attraction";
-                        url += "&radius_units=" + radiusUnits;
-                    } else {
-                        return undefined;
-                    }
-                    
-                    url += "&sort=interestingness-desc";
-                    url += "&per_page=" + this.options.bin_size;
-                    url += "&page=" + this.options.page_num;
-                    url += this.options.jsonp_tail;
-                
-                    return url;
-                },
-                "Place" : function (entity) {
-                    var url = this.options.base_url;
-                    url += "?method=flickr.photos.search";
-                    url += "&api_key=" + this.options.api_key;
-                    
-                    if (entity.has('geo')) {
-                        var geo = entity.get("geo");
-                        return this._getUrlFromEntity(geo);
-                    } else if (entity.has('address')) {
-                        //TODO: trigger search by Address
-                    } else if (entity.has('containedIn')) {
-                        var containedIn = entity.get('containedIn');
-                        return this._getUrlFromEntity(containedIn);
-                    } else if (entity.has('name')) {
-                        var name = entity.get("name");
-                        if ($.isArray(name) && name.length > 0) {
-                            name = name[0]; //just take the first
-                        }
-                        url += "&text=" + name;
-                    } else {
-                        return undefined;
-                    }
-                    
-                    url += "&sort=interestingness-desc";
-                    url += "&per_page=" + this.options.bin_size;
-                    url += "&page=" + this.options.page_num;
-                    url += this.options.jsonp_tail;
-                
-                    return url;
-                }
-            },
-            
-            // helper
-            render: undefined,
-            entity: undefined,
-            base_url    : "http://api.flickr.com/services/rest/",
-            jsonp_tail  : "&extras=url_o&format=json&jsoncallback=?",
-            
-            // events
-            start_query: function () {},
-            end_query: function () {}
-        },
-        
         _create: function () {
             var self = this;
         },
         
         _init: function () {
-            debugger;
             this.triggerSearch(this.options.entity);
         },
         
@@ -159,17 +49,17 @@
             
             if (entity) {
                 this.options.entity = entity;
-                var url = this._getUrlFromEntity(entity);
-                this._trigger('start_query', undefined, {time: new Date()});
-                $.getJSON(url, this._flickrCallback(this));
-            } else {
-                //TODO: throw error!
-                this._trigger('start_query', undefined, {time: new Date()});
-                this._trigger('end_query', undefined, {time: new Date(), photos: []});
+                for (var s in this.options.services) {
+                    var service = this.options.services[s];
+                    if (service.use) {
+                        this._trigger('start_query', undefined, {service: s, time: new Date()});
+                        service.query(entity, this);
+                    }
+                }
             }
         },
         
-        _getUrlFromEntity : function (entity) {
+        _getUrlMainPartFromEntity : function (entity, service) {
             entity = ($.isArray(entity))? entity : [ entity ];
 
             for (var e = 0; e < entity.length; e++) {
@@ -179,9 +69,9 @@
                 for (var t = 0; t < types.length; t++) {
                     var type = this.options.vie.types.get(types[t]);
                     if (type) {
-                        for (var q in this.options.ts_query) {
+                        for (var q in service.ts_url) {
                             if (type.isof(q)) {
-                                var ret = this.options.ts_query[q].call(this, entity[e]);
+                                var ret = service.ts_url[q].call(this, entity[e], service);
                                 if (ret) {
                                     return ret;
                                 }
@@ -190,43 +80,187 @@
                     }
                 }
             }
-                        
-            //TODO: fallback!
-            return undefined;
+            return "";
         },
         
-        _flickrCallback: function (widget) {
-            return function (data) {
-                var photos = [];
-                  if (data.stat === 'ok' && data.photos.total > 0) {
-                      //put them into bins
-                      for (var i = 0; i < data.photos.photo.length; i++) {
-                          var photo = data.photos.photo[i];
-                          var imgS = 'http://farm' + 
-                                  photo.farm + '.static.flickr.com/' + 
-                                  photo.server + '/' + 
-                                  photo.id + '_' + 
-                                  photo.secret + '_s.jpg';
-                          
-                          var imgZ = 'http://farm' + 
-                                  photo.farm + '.static.flickr.com/' + 
-                                  photo.server + '/' + 
-                                  photo.id + '_' + 
-                                  photo.secret + '_z.jpg';
-                          
-                          var photoObj = {
-                                  "thumbnail" : imgS,
-                                  "original" : imgZ
+        options: {
+            vie         : new VIE(),
+            more_btn_txt: "More images...",
+            page_num    : 1,
+            services    : {
+                'europeana' : {
+                    use       : false,
+                    api_key   : undefined,
+                    bin_size  : 10,
+                    base_url  : "http://api.europeana.eu/api/opensearch.rss?",
+                    tail_url  : function (widget, service) {
+                        var url = "&sort=" + service.sort;
+                        
+                        url += "&per_page=" + service.bin_size;
+                        url += "&page=" + widget.options.page_num;
+                        url += "&api_key=" + service.api_key;
+                        url += "&extras=url_o&format=json&jsoncallback=?";
+                        
+                        return url;
+                    },
+                    query : function (entity, widget) {
+                        // assemble the URL
+                        var url = this.base_url;
+                        url += widget._getUrlMainPartFromEntity(entity, this);
+                        url += this.tail_url(widget, this);
+                        // trigger the search & receive the data via callback
+                        $.getJSON(url, this.callback(widget, this));
+                    },
+                    callback : function (widget, service) {
+                        //"searchTerms=bible&&startPage=1&wskey=x";
+                        return function (data) {
+                            var photos = [];
+                            //TODO
+                            debugger;
+                            widget._pageNum++;
+                            var data = {time: new Date(), photos: photos};
+                            widget._trigger('end_query', undefined, data);
+                            var render = (widget.options.render)? widget.options.render : widget._render;
+                            render.call(widget, data);
                           };
-                          photos.push(photoObj);
-                      }
-                  }
-                  widget._pageNum++;
-                  var data = {time: new Date(), photos: photos};
-                  widget._trigger('end_query', undefined, data);
-                  var render = (widget.options.render)? widget.options.render : widget._render;
-                  render.call(widget, data);
-              };
+                    },
+                    ts_url : {
+                        "Thing" : function (entity, service) {
+                            
+                        }
+                    }
+                },
+                'flickr' : {
+                    use       : false,
+                    api_key   : undefined,
+                    bin_size  : 10,
+                    sort      : 'relevance',
+                    base_url  : "http://api.flickr.com/services/rest/?method=flickr.photos.search",
+                    tail_url  : function (widget, service) {
+                        var url = "&sort=" + service.sort;
+                        
+                        url += "&per_page=" + service.bin_size;
+                        url += "&page=" + widget.options.page_num;
+                        url += "&api_key=" + service.api_key;
+                        url += "&safe_search=1"; // safe search
+                        url += "&extras=url_o&format=json&jsoncallback=?";
+                        
+                        return url;
+                    },
+                    query : function (entity, widget) {
+                        // assemble the URL
+                        var url = this.base_url;
+                        url += widget._getUrlMainPartFromEntity(entity, this);
+                        url += this.tail_url(widget, this);
+                        // trigger the search & receive the data via callback
+                        $.getJSON(url, this.callback(widget, this));
+                    },
+                    callback  : function (widget, service) {
+                        return function (data) {
+                            var photos = [];
+                              if (data.stat === 'ok' && data.photos.total > 0) {
+                                  //put them into bins
+                                  for (var i = 0; i < data.photos.photo.length; i++) {
+                                      var photo = data.photos.photo[i];
+                                      var imgS = 'http://farm' + 
+                                              photo.farm + '.static.flickr.com/' + 
+                                              photo.server + '/' + 
+                                              photo.id + '_' + 
+                                              photo.secret + '_s.jpg';
+                                      
+                                      var imgZ = 'http://farm' + 
+                                              photo.farm + '.static.flickr.com/' + 
+                                              photo.server + '/' + 
+                                              photo.id + '_' + 
+                                              photo.secret + '_z.jpg';
+                                      
+                                      var photoObj = {
+                                              "thumbnail" : imgS,
+                                              "original" : imgZ
+                                      };
+                                      photos.push(photoObj);
+                                  }
+                              }
+                              widget._pageNum++;
+                              var data = {service: service, time: new Date(), photos: photos};
+                              widget._trigger('end_query', undefined, data);
+                              var render = (widget.options.render)? widget.options.render : widget._render;
+                              render.call(widget, data);
+                          };
+                    },
+                    ts_url : {
+                        //"Thing" : function (entity, service) {
+                        //    
+                        //},
+                        "Person" : function (entity, service) {
+                            var url = "";
+                            
+                            if (entity.has("name")) {
+                                var name = entity.get("name");
+                                if ($.isArray(name) && name.length > 0) {
+                                    name = name[0]; //just take the first
+                                }
+                                url += "&text=portrait " + name;
+                            }
+                            return url;
+                        },
+                        "GeoCoordinates" : function (entity, service) {
+                            var url = "";
+                            
+                            if (entity.has('latitude') && 
+                                entity.has('longitude')) {
+                                var ts = Math.round((new Date()).getTime() / 1000);
+                                var minUploadDate = ts - 604800 * 100; // last 100 weeks
+                                var radius = 10;
+                                var radiusUnits = "km";
+                                
+                                var lat = entity.get("latitude");
+                                if ($.isArray(lat) && lat.length > 0) {
+                                    lat = lat[0]; //just take the first
+                                }
+                                var lon = entity.get("longitude");
+                                if ($.isArray(lon) && lon.length > 0) {
+                                    lon = lon[0]; //just take the first
+                                }
+                                
+                                url += "&lat=" + lat + "&lon=" + lon;
+                                url += "&min_upload_date=" + minUploadDate;
+                                url += "&radius=" + radius;
+                                url += "&text=tourist attraction";
+                                url += "&radius_units=" + radiusUnits;
+                            }                        
+                            return url;
+                        },
+                        "Place" : function (entity, service) {
+                            var url = "";
+                            
+                            if (entity.has('geo')) {
+                                var geo = entity.get("geo");
+                                return this._getUrlMainPartFromEntity(geo, service);
+                            }else if (entity.has('containedIn')) {
+                                var containedIn = entity.get('containedIn');
+                                return this._getUrlMainPartFromEntity(containedIn, service);
+                            } else if (entity.has('name')) {
+                                var name = entity.get("name");
+                                if ($.isArray(name) && name.length > 0) {
+                                    name = name[0]; //just take the first
+                                }
+                                url += "&text=tourist attraction " + name;
+                            }
+                            return url;
+                        }
+                    }
+                }
+            },
+            
+            // helper
+            render: undefined,
+            entity: undefined,
+            
+            // events
+            start_query: function () {},
+            end_query: function () {}
         }
+        
     });
 })(jQuery);

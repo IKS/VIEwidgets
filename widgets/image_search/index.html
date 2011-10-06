@@ -40,9 +40,19 @@
             // set-up of the Flickr-widget
             $('#image_container')
             .vieImageSearch({
-                vie     : myVIE,
-                api_key : "ffd6f2fc41249feeddd8e62a531dc83e",
-                bin_size: 8
+                vie    : myVIE,
+                services : {
+                    flickr : {
+                        api_key : "ffd6f2fc41249feeddd8e62a531dc83e",
+                    	bin_size: 8,
+                    	use: true
+                    },
+                    europeana : {
+                        api_key : "xoxoxo",
+                    	bin_size: 8,
+                    	use: false
+                    }
+                }
             });
             
             $('[about]')
