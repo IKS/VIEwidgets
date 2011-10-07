@@ -8,10 +8,12 @@
         
         _create: function () {
             var self = this;
+            return this;
         },
         
         _init: function () {
             this.triggerSearch(this.options.entity);
+            return this;
         },
         
         _render: function (data) {
@@ -39,6 +41,7 @@
                 $(self.element)
                 .append(button);
             }
+            return this;
         },
         
         triggerSearch: function (entity) {
@@ -57,6 +60,7 @@
                     }
                 }
             }
+            return this;
         },
         
         _getUrlMainPartFromEntity : function (entity, service) {
