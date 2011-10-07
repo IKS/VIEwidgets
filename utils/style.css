@@ -48,7 +48,7 @@ body {
   box-shadow: rgba(0, 0, 0, 0.2) 0 5px 6px 0;
 }
 
-#wrapper h1 {
+h1 {
     font-size: 36px;
     font-weight: bold;
     text-align: center;
@@ -56,8 +56,16 @@ body {
     line-height: 1;
 }
 
-#wrapper h2 {
+h2 {
     font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+    padding: 0px 0 20px 0;
+    line-height: 1;
+}
+
+h3 {
+    font-size: 26px;
     font-weight: bold;
     text-align: center;
     padding: 0px 0 20px 0;
@@ -78,7 +86,7 @@ body {
   text-align: center;
 }
 
-.copyright, .copyright a, .tellmemore, .tellmemore a, .goback, .goback a {
+.copyright, .copyright a, .tellmemore a, .goback a {
   font-size: 11px;
   text-transform: uppercase;
   text-decoration: none;
