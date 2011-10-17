@@ -64,10 +64,13 @@ we do now is to set up the widget:
             $('#image_container')
             .vieImageSearch({
                 vie    : myVIE,
+            	bin_size: 8,
                 services : {
                     flickr : {
-                        api_key : "&lt;put_your_API_KEY_here>",
-                        bin_size: 8,
+                        api_key : "ffd6f2fc41249feeddd8e62a531dc83e",
+                    	use: true
+                    },
+                    gimage : {
                         use: true
                     }
                 }
@@ -79,8 +82,6 @@ image search:
 <br /><br />
 <pre class="sh_javascript_dom">
             $('[about]')
-            .attr("title", "Click on an entity to trigger a type-specific image search.")
-            .tipTip()
             .click(function (ev) {
                 var uri = $(this).attr('about');
                 $('#image_container')
@@ -88,7 +89,6 @@ image search:
                     entity: uri
                 });
             });
-        });
 </pre>
 <br />
 <b>User:</b> "Great! But this searches only for <i>Persons</i> and <i>Places</i>... How can I extend it?"<br />
@@ -98,11 +98,9 @@ image search:
             $('#image_container')
             .vieImageSearch({
                 vie    : myVIE,
-                services : {
-                    flickr : {
-                        ...
-                        ts_url : {
-                        "Product" : function (entity, service) {
+                ts_url : { //type-specific rendering of <Entity-Type, Service> tuples
+                    "Product" : {
+                        'europeana' : function (entity, serviceId) {
                             var url = "";
                             if (entity.has("brand") && entity.has("model")) {
                                 var brand = entity.get("brand").get("name");
@@ -112,7 +110,41 @@ image search:
                                 return undefined;
                             }
                             return url;
+                        }
+                    }
+                },
+                services : {
+                    'europeana' : {
+                        use       : false,
+                        query : function (entity, serviceId, widget, queryId) {
+                            var mainUrl = widget._getUrlMainPartFromEntity(entity, serviceId);
+                            if (mainUrl) {
+                                // assemble the URL
+                                var url = this.base_url;
+                                url += mainUrl;
+                                url += this.tail_url(widget, this);
+                                // trigger the search & receive the data via callback
+                                $.getJSON(url, this.callback(widget, entity.id, serviceId, queryId));
+                            } else {
+                                widget._trigger("error", undefined, {
+                                    msg: "No type-specific URL can be acquired for entity. Please add/overwrite widget.options[<widget_type>][" + serviceId + "]!", 
+                                    id : entityId, 
+                                    service : serviceId, 
+                                    queryId : queryId});
+                            }
                         },
+                        callback  : function (widget, entityId, serviceId, queryId) {
+                            return function (data) {
+                                  var photos = [];
+                                  //TO BE IMPLEMENTED: extract photos from data into
+                                  // the 'photos' object
+                                  
+                                  //trigger the presentation:
+                                  var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), photos: photos};
+                                  widget._trigger('end_query', undefined, data);
+                                  widget.render(data);
+                              };
+                        }
                     }
                 }
             });

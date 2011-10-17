@@ -37,34 +37,41 @@
             myVIE.load({element: $('[about]')})
             .from('rdfa').execute();
             
-            // set-up of the Flickr-widget
+            var moreButton = $('<button>')
+            .addClass("more-button")
+            .text("More images...")
+            .click(function () {
+                var widget = $('#image_container').data("vieImageSearch");
+                widget.triggerSearch(widget.options.entity, widget.options.page_num+1);
+            });
+            
+            // set-up of the Image-widget
             $('#image_container')
+            .before(moreButton)
             .vieImageSearch({
                 vie    : myVIE,
+            	bin_size: 8,
                 services : {
                     flickr : {
                         api_key : "ffd6f2fc41249feeddd8e62a531dc83e",
-                    	bin_size: 8,
                     	use: true
                     },
-                    europeana : {
-                        api_key : "xoxoxo",
-                    	bin_size: 8,
-                    	use: false
+                    gimage : {
+                        use: true
                     }
                 }
             });
-            
+
             $('[about]')
-            .attr("title", "Click on an entity to trigger a type-specific photo search.")
-            .tipTip()
             .click(function (ev) {
                 var uri = $(this).attr('about');
                 $('#image_container')
                 .vieImageSearch({
                     entity: uri
                 });
-            });
+            })
+            .attr("title", "Click on an entity to trigger a type-specific photo search.")
+            .tipTip();
         });
     </script>
     
@@ -110,11 +117,12 @@
     </section>
     <br />
     </article>
-        
+    
     <div id="image_container"></div>
     
     <div class="copyright">
-        This site uses the <a href="http://www.flickr.com/services/api/">Flickr</a> API! <br />However it is not associated or endorsed by <a href="http://www.flickr.com/">Flickr</a>.
+        This site uses the <a href="http://www.flickr.com/services/api/">Flickr API</a>! <br />However it is not associated or endorsed by <a href="http://www.flickr.com/">Flickr</a>.<br />
+        This site uses the <a href="http://code.google.com/apis/imagesearch/">Google Image API</a>! <br />However it is not associated or endorsed by <a href="http://www.google.com">Google</a>.
     </div>
     <div style="text-align:center;margin-top:20px;" class="tellmemore">
       <h3>Tutorial</h3>
