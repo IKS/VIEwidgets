@@ -116,7 +116,6 @@
             var entity = this.options.vie.entities.get(entityId);
             
             var imageId = "<" + photo.original + ">";
-            debugger;
             this.options.vie.entities.addOrUpdate({
                 '@subject' : imageId, 
                 '@type'    : "ImageObject",
