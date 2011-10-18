@@ -122,7 +122,8 @@
                 "time"     : time.toUTCString(),
                 "query"    : queryId,
                 "service"  : serviceId,
-                "entity"   : entity.id
+                "entity"   : entity.id,
+                "image"    : photo.original
             });
             entity.setOrAdd('image', imageId);
         },
