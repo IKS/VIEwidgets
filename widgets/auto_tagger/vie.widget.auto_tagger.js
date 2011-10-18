@@ -38,7 +38,7 @@
                 if (!this.options.services[s].use) {
                     continue;
                 }
-                myVIE.analyze({element: elem})
+                this.options.vie.analyze({element: elem})
                 .from(s).execute()
                 .done(function (entities) {
                     self.options.entities = self.options.entities.concat(entities);
