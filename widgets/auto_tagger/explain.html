@@ -1,0 +1,89 @@
+<html>
+<head>
+    <title>VIE Widget - Seamantic Auto Tagging</title>
+    
+    <link href="../../utils/style.css" media="screen" rel="stylesheet">
+    
+    <!--  jQuery &amp; jQuery UI -->
+    <script type="text/javascript" src="../../lib/jquery-1.6.1.js"></script>
+    <script type="text/javascript" src="../../lib/jquery-ui-1.8.16.js"></script>
+        
+    <!-- SHJS -->
+    <script type="text/javascript"          src="../../utils/shjs/shjs.min.js"></script>
+    <script type="text/javascript"          src="../../utils/shjs/sh_javascript.min.js"></script>
+    <script type="text/javascript"          src="../../utils/shjs/sh_javascript_dom.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../utils/shjs/sh_dull.min.css" media="screen" />
+</head>
+<body onload="sh_highlightDocument();">
+<div id="wrapper">
+    <h1>VIE Widget - Auto Tagger</h1>
+    <h2>How To</h2>
+   <article>
+    First, we need to include the dependencies in the header:
+    <br /><br />
+        <pre class="sh_javascript_dom">
+...
+&lt;!--  jQuery &amp; jQuery UI -->
+&lt;script type="text/javascript" src="../../lib/jquery-1.6.1.js">&lt;/script>
+&lt;script type="text/javascript" src="../../lib/jquery-ui-1.8.16.js">&lt;/script>
+
+&lt;!--  VIE dependencies: Underscore &amp; Backbone -->
+&lt;script type="text/javascript" src="../../lib/underscore.js">&lt;/script>        
+&lt;script type="text/javascript" src="../../lib/backbone.js">&lt;/script>
+  
+&lt;!-- vie.js itself -->
+&lt;script type="text/javascript" src="../../lib/vie.js">&lt;/script>
+&lt;script type="text/javascript" src="../../utils/schemaOrg/schema.json">&lt;/script>
+&lt;script type="text/javascript" src="../../utils/schemaOrg/wrapper.js">&lt;/script>
+
+&lt;!--  the current VIE widget -->
+&lt;script type="text/javascript" src="./vie.widget.auto_tagger.js">&lt;/script>
+...
+</pre>
+<br />
+Now, we need to set-up the widget and bind it to certain events:
+<br /><br />
+<pre class="sh_javascript_dom">
+&lt;script type="text/javascript">
+    $(function() {
+        // initialize a global VIE object
+        var myVIE = window.myVIE = new VIE();
+        myVIE.loadSchemaOrg();
+        
+        $('article > section')
+        .click(function (ev) {
+            $('#tag_container .persons .tags')
+            .vieAutoTag({
+                render : undefined, // can be a function to allow customized rendering
+                // takes an array of VIE entities as parameter.
+                append : true, // if set to false, pre-selected entities will be removed
+                vie : myVIE, // the current VIE instance
+                services: { // the VIE-service(s) to be used
+                    'rdfa' : { // we read the RDFa information from the page
+                        use: true,
+                        service: myVIE.RdfaService
+                    }
+                },
+                element: $(this), // the section to be analyzed
+                filter: ["Person"], // we are currently only interested in 'Person's
+                label: ["Person.givenName", "Person.name"] // the label of the tag,
+                // if a property of a type is not available, the next template will be taken
+                // this can also be a function and supports full ontological hierarchy of VIE
+            });
+        });
+</pre>
+<br />
+</article>
+    <div style="text-align:center;margin-top:20px;" class="goback">
+      Click <a style="color:#31e;" href="index.html">here</a> to go back to the demo.
+    </div>
+    <div style="width:130px;margin-left:auto;margin-right:auto;margin-top:20px;" class="download">
+      <h3>Download</h3>
+      <a href="http://github.com/neogermi/VIEwidgets/zipball/master">
+        <img border="0" width="60" src="http://github.com/images/modules/download/zip.png"></a>
+      <a href="http://github.com/neogermi/VIEwidgets/tarball/master">
+        <img border="0" width="60" src="http://github.com/images/modules/download/tar.png"></a>
+    </div>
+    </div>
+</body>
+</html>
