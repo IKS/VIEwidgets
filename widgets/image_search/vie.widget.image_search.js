@@ -137,7 +137,7 @@
 
             for (var e = 0; e < entity.length; e++) {
                 var types = entity[e].get('@type');
-                types = ($.isArray(types))? types : [ types ];
+                types = ($.isArray(types))? types : [types];
                 
                 for (var t = 0; t < types.length; t++) {
                     var type = this.options.vie.types.get(types[t]);
