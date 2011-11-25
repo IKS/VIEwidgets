@@ -41,11 +41,11 @@
         render: function (data) {
             data.time = (data.time)? data.time : new Date();
             if (data.queryId === this.options.query_id) {
-                for (var p = 0; p < data.photos.length; p++) {
-                    this._triplifyImage(data.photos[p], data.time, data.serviceId, data.entityId, data.queryId);
-                    this.options.photos.push(data.photos[p]);
+                for (var p = 0; p < data.objects.length; p++) {
+                    this._triplifyImage(data.objects[p], data.time, data.serviceId, data.entityId, data.queryId);
+                    this.options.objects.push(data.objects[p]);
                 }
-                delete data["photos"];
+                delete data["objects"];
                 var render = (this.options.render)? this.options.render : this._render;
                 render.call(this, data);
             } else {
@@ -56,17 +56,17 @@
         _render: function (data) {
             var self = this;
             
-            var photos = self.options.photos;
+            var objects = self.options.objects;
             var time = data.time;
             
             // clear the container element
             $(self.element).empty();
                         
             //rendering
-            for (var p = 0; p < photos.length && p < this.options.bin_size; p++) {
-                var photo = photos[p];
-                var image = $('<a class="' + self.widgetBaseClass + '-image" target="_blank" href="' + photo.original + '"></a>')
-                    .append($("<img src=\"" + photo.thumbnail + "\" />"));
+            for (var p = 0; p < objects.length && p < this.options.bin_size; p++) {
+                var object = objects[p];
+                var image = $('<a class="' + self.widgetBaseClass + '-image" target="_blank" href="' + object.original + '"></a>')
+                    .append($("<img src=\"" + object.thumbnail + "\" />"));
                 $(self.element).append(image);
             }
             return this;
@@ -80,7 +80,7 @@
             }
             this.options.query_id++;
             var qId = this.options.query_id;
-            this.options.photos = [];
+            this.options.objects = [];
             this.options.page_num = (pageNum)? pageNum : 0;
             
             var entity = undefined;
@@ -137,7 +137,7 @@
 
             for (var e = 0; e < entity.length; e++) {
                 var types = entity[e].get('@type');
-                types = ($.isArray(types))? types : [types];
+                types = ($.isArray(types))? types : [ types ];
                 
                 for (var t = 0; t < types.length; t++) {
                     var type = this.options.vie.types.get(types[t]);
@@ -168,28 +168,13 @@
             timeout     : 10000,
             bin_size  : 10,
             services    : {
-                /*'europeana' : {
-                    use       : false,
-                    api_key   : undefined,
-                    base_url  : "http://api.europeana.eu/api/opensearch.rss?",
-                    tail_url  : function (widget, service) {
-                        //TODO
-                    },
-                    query : function (entity, serviceId, widget) {
-                        //TODO
-                    },
-                    callback : function (widget, service) {
-                        //TODO
-                    }
-                },*/
                 'gimage' : {
                     use       : false,
                     api_key   : undefined,
                     safe      : "active", //active,moderate,off
                     base_url  : "https://ajax.googleapis.com/ajax/services/search/images?v=1.0",
                     tail_url  : function (widget, service) {
-                        var url = "&safe=" + service.safe;
-                        
+                        var url = "&safe=" + service.safe;                        
                         url += "&rsz=" + widget.options.bin_size;
                         url += "&start=" + (widget.options.page_num * widget.options.bin_size);
                         url += "&callback=?";
@@ -203,10 +188,10 @@
                         
                         if (mainUrl) {
                             var url = this.base_url;
-                            url += mainUrl.replace(/ /g, '+');
+                            url += mainUrl;
                             url += this.tail_url(widget, this);
                             // trigger the search & receive the data via callback
-                            $.getJSON(url, this.callback(widget, entity.id, serviceId, queryId));
+                            jQuery.getJSON(url,this.callback(widget, entity.id, serviceId, queryId));
                         } else {
                             widget._trigger("error", undefined, {
                                 msg: "No type-specific URL can be acquired for entity. Please add/overwrite widget.options[<widget_type>][" + serviceId + "]!", 
@@ -217,20 +202,21 @@
                     },
                     callback  : function (widget, entityId, serviceId, queryId) {
                         return function (data) {
-                            var photos = [];
+                            var objects = [];
                             if (data && data.responseStatus === 200) {
                                 var rData = data.responseData.results;
                                 for (var r = 0; r < rData.length; r++) {
                                     var thumnail = rData[r].tbUrl;
                                     var original = rData[r].url;
-                                    var photoObj = {
+                                    
+                                    var obj = {
                                         "thumbnail" : thumnail,
                                         "original" : original
                                     };
-                                    photos.push(photoObj);
+                                    objects.push(obj);
                                 }
                             }
-                            var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), photos: photos};
+                            var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), objects: objects};
                             widget._trigger('end_query', undefined, data);
                             widget.render(data);
                           };
@@ -263,18 +249,18 @@
                             url += mainUrl;
                             url += this.tail_url(widget, this);
                             // trigger the search & receive the data via callback
-                            $.getJSON(url, this.callback(widget, entity.id, serviceId, queryId));
+                            jQuery.getJSON(url,this.callback(widget, entity.id, serviceId, queryId));
                         } else {
                             widget._trigger("error", undefined, {
                                 msg: "No type-specific URL can be acquired for entity. Please add/overwrite widget.options[<widget_type>][" + serviceId + "]!", 
-                                id : entityId, 
+                                id : entity.id, 
                                 service : serviceId, 
                                 queryId : queryId});
                         }
                     },
                     callback  : function (widget, entityId, serviceId, queryId) {
                         return function (data) {
-                              var photos = [];
+                              var objects = [];
                               if (data.stat === 'ok' && data.photos.total > 0) {
                                   //put them into bins
                                   for (var i = 0; i < data.photos.photo.length; i++) {
@@ -291,14 +277,14 @@
                                               photo.id + '_' + 
                                               photo.secret + '_z.jpg';
                                       
-                                      var photoObj = {
+                                      var obj = {
                                               "thumbnail" : imgS,
                                               "original" : imgZ
                                       };
-                                      photos.push(photoObj);
+                                      objects.push(obj);
                                   }
                               }
-                              var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), photos: photos};
+                              var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), objects: objects};
                               widget._trigger('end_query', undefined, data);
                               widget.render(data);
                           };
@@ -312,79 +298,54 @@
                         if (entity.has("name")) {
                             var name = entity.get("name");
                             if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&text="; // *no* type-specific keywords
-                                url += name;
-                                return url;
+                                name = name[0]; //just take the first
                             }
+                            url += "&text="; // *no* type-specific keywords
+                            url += name;
                         }
-                        return undefined;
+                        return url;
                     },
                     'gimage' : function (entity, serviceId) {
                         var url = "";
                         if (entity.has("name")) {
                             var name = entity.get("name");
                             if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&q="; // *no* type-specific keywords
-                                url += name.replace(/ /g, '+').replace(/@.*/, '').replace(/"/g, '');
-                                return url;
+                                name = name[0]; //just take the first
                             }
+                            url += "&q="; // *no* type-specific keywords
+                            url += name.replace(/ /g, '+');
                         }
-                        return undefined;
+                        return url;
                     }
                 },
                 "Person" : {
                     'flickr' : function (entity, serviceId) {
                         var url = "";
+                        
                         if (entity.has("name")) {
                             var name = entity.get("name");
                             if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&text="; // *no* type-specific keywords
-                                url += name.replace(/ /g, '%20').replace(/@.*/, '').replace(/"/g, '');
-                                return url;
+                                name = name[0]; //just take the first
                             }
+                            url += "&text=portrait "; // type-specific keywords
+                            url += name;
+                        } else {
+                            return undefined
                         }
-                        return undefined;
+                        return url;
                     },
                     'gimage' : function (entity, serviceId) {
                         var url = "";
                         if (entity.has("name")) {
                             var name = entity.get("name");
                             if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&imgtype=face"; // type-specific search for faces
-                                url += "&q="; // *no* type-specific keywords
-                                url += name.replace(/ /g, '+').replace(/@.*/, '').replace(/"/g, '');
-                                return url;
+                                name = name[0]; //just take the first
                             }
+                            url += "&imgtype=face"; // type-specific search for faces
+                            url += "&q=";
+                            url += name.replace(/ /g, '+');
                         }
-                        return undefined;
+                        return url;
                     }
                 },
                 "GeoCoordinates" : {
@@ -412,9 +373,10 @@
                             url += "&radius=" + radius;
                             url += "&text=tourist attraction"; // type-specific keywords!
                             url += "&radius_units=" + radiusUnits;
-                            return url;
-                        }
-                        return undefined
+                        } else {
+                            return undefined
+                        }                      
+                        return url;
                     },
                     'gimage' : function (entity, serviceId) {
                         return undefined;
@@ -424,8 +386,8 @@
                     'flickr' : function (entity, serviceId) {
                         var url = "";
                         
-                        if (entity.has('schema:geo')) {
-                            var geo = entity.get("schema:geo");
+                        if (entity.has('geo')) {
+                            var geo = entity.get("geo");
                             return this._getUrlMainPartFromEntity(geo, serviceId);
                         } else if (entity.has('containedIn')) {
                             var containedIn = entity.get('containedIn');
@@ -433,82 +395,29 @@
                         } else if (entity.has('name')) {
                             var name = entity.get("name");
                             if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&text="; // *no* type-specific keywords
-                                url += name.replace(/ /g, '%20').replace(/@.*/, '').replace(/"/g, '');
-                                return url;
+                                name = name[0]; //just take the first
                             }
+                            url += "&text=tourist attraction "; // type-specific keywords
+                            url += name;
+                        } else {
+                            return undefined
                         }
-                        return undefined
+                        return url;
                     },
                     'gimage' : function (entity, serviceId) {
-                        var url = "";
-                        if (entity.has('name')) {
-                            var name = entity.get("name");
-                            if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&imgtype=photo"; // type-specific commands
-                                url += "&q=tourist+attraction+" + name.replace(/ /g, '+').replace(/@.*/, '').replace(/"/g, '');
-                                return url;
-                            }
-                        }
-                        return undefined;
-                    }
-                },
-                "Organization" : {
-                    'flickr' : function (entity, serviceId) {
                         var url = "";
                         
-                        if (entity.has('location')) {
-                            var containedIn = entity.get('location');
-                            return this._getUrlMainPartFromEntity(containedIn, serviceId);
-                        } else if (entity.has('name')) {
-                            var name = entity.get("name");
-                            if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&text="; // *no* type-specific keywords
-                                url += name.replace(/ /g, '%20').replace(/@.*/, '').replace(/"/g, '');
-                                return url;
-                            }
-                        }
-                        return undefined
-                    },
-                    'gimage' : function (entity, serviceId) {
-                        var url = "";
                         if (entity.has('name')) {
                             var name = entity.get("name");
                             if ($.isArray(name) && name.length > 0) {
-                                for (var i = 0; i < name.length; i++) {
-                                    if (name[i].indexOf('@en') > -1) {
-                                        name = name[i];
-                                        break;
-                                    }
-                                }
-                                if ($.isArray(name)) name = name[0]; //just take the first
-                                url += "&imgtype=photo"; // type-specific commands
-                                url += "&q=headquarter+" + name.replace(/ /g, '+').replace(/@.*/, '').replace(/"/g, '');
-                                return url;
+                                name = name[0]; //just take the first
                             }
+                            url += "&imgtype=photo"; // type-specific commands
+                            url += "&q=" + name.replace(/ /g, '+');
+                        } else {
+                            return undefined
                         }
-                        return undefined;
+                        return url;
                     }
                 }
             },
@@ -516,7 +425,7 @@
             // helper
             render      : undefined,
             entity      : undefined,
-            photos      : [],
+            objects     : [],
             timer       : undefined,
             page_num    : 1,
             query_id    : 0,
