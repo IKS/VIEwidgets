@@ -9,26 +9,28 @@
         _create: function () {
             //extend VIE with an ontological representation of the images
             var v = this.options.vie;
-            v.types.get("ImageObject").attributes.add("depicts", ["Thing"]);
-            v.types.get("Thing").attributes.get("image").range.push("ImageObject");
-            v.types.add("VIEImageResult", [
-               {
-               "id"    : "query",
-               "range" : ["Text", "Thing"]
-               },
-               {
-               "id"    : "service",
-               "range" : ["Text", "Thing"]
-               },
-               {
-                "id"    : "time",
-                "range" : "Date"
-               },
-               {
-                "id"    : "entity",
-                "range" : "Thing"
-               }]
-            ).inherit(v.types.get("Thing"));
+			if (v.types.get("ImageObject").attributes.get("depicts") !== undefined) {
+				v.types.get("ImageObject").attributes.add("depicts", ["Thing"]);
+				v.types.get("Thing").attributes.get("image").range.push("ImageObject");
+				v.types.add("VIEImageResult", [
+				   {
+				   "id"    : "query",
+				   "range" : ["Text", "Thing"]
+				   },
+				   {
+				   "id"    : "service",
+				   "range" : ["Text", "Thing"]
+				   },
+				   {
+					"id"    : "time",
+					"range" : "Date"
+				   },
+				   {
+					"id"    : "entity",
+					"range" : "Thing"
+				   }]
+				).inherit(v.types.get("Thing"));
+			}
             return this;
         },
         
@@ -39,11 +41,11 @@
         render: function (data) {
             data.time = (data.time)? data.time : new Date();
             if (data.queryId === this.options.query_id) {
-                for (var p = 0; p < data.photos.length; p++) {
-                    this._triplifyImage(data.photos[p], data.time, data.serviceId, data.entityId, data.queryId);
-                    this.options.photos.push(data.photos[p]);
+                for (var p = 0; p < data.objects.length; p++) {
+                    this._triplifyImage(data.objects[p], data.time, data.serviceId, data.entityId, data.queryId);
+                    this.options.objects.push(data.objects[p]);
                 }
-                delete data["photos"];
+                delete data["objects"];
                 var render = (this.options.render)? this.options.render : this._render;
                 render.call(this, data);
             } else {
@@ -54,17 +56,17 @@
         _render: function (data) {
             var self = this;
             
-            var photos = self.options.photos;
+            var objects = self.options.objects;
             var time = data.time;
             
             // clear the container element
             $(self.element).empty();
                         
             //rendering
-            for (var p = 0; p < photos.length && p < this.options.bin_size; p++) {
-                var photo = photos[p];
-                var image = $('<a class="' + self.widgetBaseClass + '-image" target="_blank" href="' + photo.original + '"></a>')
-                    .append($("<img src=\"" + photo.thumbnail + "\" />"));
+            for (var p = 0; p < objects.length && p < this.options.bin_size; p++) {
+                var object = objects[p];
+                var image = $('<a class="' + self.widgetBaseClass + '-image" target="_blank" href="' + object.original + '"></a>')
+                    .append($("<img src=\"" + object.thumbnail + "\" />"));
                 $(self.element).append(image);
             }
             return this;
@@ -78,7 +80,7 @@
             }
             this.options.query_id++;
             var qId = this.options.query_id;
-            this.options.photos = [];
+            this.options.objects = [];
             this.options.page_num = (pageNum)? pageNum : 0;
             
             var entity = undefined;
@@ -135,7 +137,7 @@
 
             for (var e = 0; e < entity.length; e++) {
                 var types = entity[e].get('@type');
-                types = ($.isArray(types))? types : [types];
+                types = ($.isArray(types))? types : [ types ];
                 
                 for (var t = 0; t < types.length; t++) {
                     var type = this.options.vie.types.get(types[t]);
@@ -166,31 +168,15 @@
             timeout     : 10000,
             bin_size  : 10,
             services    : {
-                /*'europeana' : {
-                    use       : false,
-                    api_key   : undefined,
-                    base_url  : "http://api.europeana.eu/api/opensearch.rss?",
-                    tail_url  : function (widget, service) {
-                        //TODO
-                    },
-                    query : function (entity, serviceId, widget) {
-                        //TODO
-                    },
-                    callback : function (widget, service) {
-                        //TODO
-                    }
-                },*/
                 'gimage' : {
                     use       : false,
                     api_key   : undefined,
                     safe      : "active", //active,moderate,off
                     base_url  : "https://ajax.googleapis.com/ajax/services/search/images?v=1.0",
                     tail_url  : function (widget, service) {
-                        var url = "&safe=" + service.safe;
-                        
+                        var url = "&safe=" + service.safe;                        
                         url += "&rsz=" + widget.options.bin_size;
                         url += "&start=" + (widget.options.page_num * widget.options.bin_size);
-                        url += "&safe_search=1"; // safe search
                         url += "&callback=?";
                         
                         return url;
@@ -205,31 +191,32 @@
                             url += mainUrl;
                             url += this.tail_url(widget, this);
                             // trigger the search & receive the data via callback
-                            $.getJSON(url, this.callback(widget, entity.id, serviceId, queryId));
+                            jQuery.getJSON(url,this.callback(widget, entity.id, serviceId, queryId));
                         } else {
                             widget._trigger("error", undefined, {
                                 msg: "No type-specific URL can be acquired for entity. Please add/overwrite widget.options[<widget_type>][" + serviceId + "]!", 
-                                id : entityId, 
+                                id : entity.id, 
                                 service : serviceId, 
                                 queryId : queryId});
                         }
                     },
                     callback  : function (widget, entityId, serviceId, queryId) {
                         return function (data) {
-                            var photos = [];
+                            var objects = [];
                             if (data && data.responseStatus === 200) {
                                 var rData = data.responseData.results;
                                 for (var r = 0; r < rData.length; r++) {
                                     var thumnail = rData[r].tbUrl;
                                     var original = rData[r].url;
-                                    var photoObj = {
+                                    
+                                    var obj = {
                                         "thumbnail" : thumnail,
                                         "original" : original
                                     };
-                                    photos.push(photoObj);
+                                    objects.push(obj);
                                 }
                             }
-                            var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), photos: photos};
+                            var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), objects: objects};
                             widget._trigger('end_query', undefined, data);
                             widget.render(data);
                           };
@@ -262,18 +249,18 @@
                             url += mainUrl;
                             url += this.tail_url(widget, this);
                             // trigger the search & receive the data via callback
-                            $.getJSON(url, this.callback(widget, entity.id, serviceId, queryId));
+                            jQuery.getJSON(url,this.callback(widget, entity.id, serviceId, queryId));
                         } else {
                             widget._trigger("error", undefined, {
                                 msg: "No type-specific URL can be acquired for entity. Please add/overwrite widget.options[<widget_type>][" + serviceId + "]!", 
-                                id : entityId, 
+                                id : entity.id, 
                                 service : serviceId, 
                                 queryId : queryId});
                         }
                     },
                     callback  : function (widget, entityId, serviceId, queryId) {
                         return function (data) {
-                              var photos = [];
+                              var objects = [];
                               if (data.stat === 'ok' && data.photos.total > 0) {
                                   //put them into bins
                                   for (var i = 0; i < data.photos.photo.length; i++) {
@@ -290,14 +277,14 @@
                                               photo.id + '_' + 
                                               photo.secret + '_z.jpg';
                                       
-                                      var photoObj = {
+                                      var obj = {
                                               "thumbnail" : imgS,
                                               "original" : imgZ
                                       };
-                                      photos.push(photoObj);
+                                      objects.push(obj);
                                   }
                               }
-                              var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), photos: photos};
+                              var data = {entityId : entityId, serviceId: serviceId, queryId : queryId, time: new Date(), objects: objects};
                               widget._trigger('end_query', undefined, data);
                               widget.render(data);
                           };
@@ -317,9 +304,6 @@
                             url += name;
                         }
                         return url;
-                    },
-                    'europeana' : function (entity, serviceId) {
-                        return undefined;
                     },
                     'gimage' : function (entity, serviceId) {
                         var url = "";
@@ -441,7 +425,7 @@
             // helper
             render      : undefined,
             entity      : undefined,
-            photos      : [],
+            objects     : [],
             timer       : undefined,
             page_num    : 1,
             query_id    : 0,
